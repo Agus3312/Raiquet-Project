@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model User {
+  id              String   @id @default(uuid())
+  role            String   // Enum UserRole from core
+  email           String   @unique
+  passwordHash    String
+  name            String?
+  reputationScore Float    @default(5.0)
+  mpAccountId     String?
+
+  listings        Listing[]
+  ordersAsBuyer   Order[]       @relation("BuyerOrders")
+  ordersAsSeller  Order[]       @relation("SellerOrders")
+  deliveryJobs    DeliveryJob[]
+  reviewsGiven    Review[]      @relation("ReviewAuthor")
+  reviewsReceived Review[]      @relation("ReviewTarget")
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Listing {
+  id          String   @id @default(uuid())
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  title       String
+  description String
+  price       Float
+  condition   String   // 'NEW' | 'USED'
+  category    String?
+  images      String[] // URLs to uploaded images
+  lat         Float
+  lng         Float
+  embedding   Unsupported("vector(1536)")? // For pgvector semantic search
+  status      String   @default("ACTIVE") // Enum ListingStatus
+
+  orders      Order[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  buyerId     String
+  buyer       User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId    String
+  seller      User     @relation("SellerOrders", fields: [sellerId], references: [id])
+
+  itemPrice   Float
+  buyerFee    Float
+  deliveryFee Float
+  totalAmount Float
+  status      String   @default("PENDING") // Enum OrderStatus
+  mpPaymentId String?
+
+  deliveryJob DeliveryJob?
+  review      Review?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DeliveryJob {
+  id              String   @id @default(uuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id])
+  riderId         String?
+  rider           User?    @relation(fields: [riderId], references: [id])
+
+  status          String   @default("AVAILABLE") // Enum DeliveryStatus
+  payoutAmount    Float    @default(3300)
+
+  pickupLat       Float
+  pickupLng       Float
+  dropoffLat      Float
+  dropoffLng      Float
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id])
+  authorId    String
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  targetId    String
+  target      User     @relation("ReviewTarget", fields: [targetId], references: [id])
+  rating      Int      // 1-5
+  comment     String?
+
+  createdAt   DateTime @default(now())
+}

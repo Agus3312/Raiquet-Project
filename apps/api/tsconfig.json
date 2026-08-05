@@ -1,0 +1,9 @@
+{
+  "extends": "@raiquet/config/typescript/nest.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  }
+}

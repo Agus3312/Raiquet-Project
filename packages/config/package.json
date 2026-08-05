@@ -1,0 +1,14 @@
+{
+  "name": "@raiquet/config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "eslint": "^8",
+    "eslint-config-next": "^14",
+    "eslint-config-prettier": "^9",
+    "eslint-plugin-react": "^7",
+    "prettier": "^3",
+    "typescript": "^5"
+  }
+}
